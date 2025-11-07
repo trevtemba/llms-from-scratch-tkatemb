@@ -62,3 +62,10 @@ print(tokenizer.decode(tokenizer.encode(text)))
 tokenizer = tiktoken.get_encoding("gpt2")
 integers = tokenizer.encode(text, allowed_special={"<|endoftext|>"})
 print(integers)
+strings = tokenizer.decode(integers)
+print(strings)
+
+for i in range(1, len(integers)):
+    x = integers[:i]
+    y = integers[i]
+    print(f"input: {tokenizer.decode(x)} --> target: {tokenizer.decode([y])}")
