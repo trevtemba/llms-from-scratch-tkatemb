@@ -58,3 +58,4 @@ context_vectors = attn_weights @ inputs
 print("context vectors:\n", context_vectors)
 
 
+
