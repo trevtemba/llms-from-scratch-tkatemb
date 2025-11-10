@@ -43,6 +43,22 @@ d_out = 2 # output embedding size these are usually the same, but for demo purpo
 # context_vec_2 = attn_weights_2 @ values
 # print(context_vec_2)
 
+# torch.manual_seed(123)
+# sa_v2 = sa.SelfAttention_V2(d_in=d_in, d_out=d_out, qkv_bias=False)
+# print(sa_v2(inputs))
+
+batch = torch.stack((inputs, inputs), dim=0)
+print(batch.shape)
 torch.manual_seed(123)
-sa_v2 = sa.SelfAttention_V2(d_in=d_in, d_out=d_out, qkv_bias=False)
-print(sa_v2(inputs))
+context_length = batch.shape[1]
+d_in = batch.shape[-1]
+d_out = 2
+
+# ca = sa.CasualAttention(d_in=d_in, d_out=d_out, context_length=context_length, dropout=0.0)
+# context_vecs = ca(batch)
+# print("context_vecs.shape:", context_vecs.shape)
+
+mha = sa.MultiHeadAttentionWrapper(d_in=d_in, d_out=d_out, context_length=context_length, dropout=0.0, num_heads=2)
+context_vecs = mha(batch)
+print(context_vecs)
+print("context_vecs.shape:", context_vecs.shape)
