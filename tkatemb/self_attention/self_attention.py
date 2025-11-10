@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 
+torch.manual_seed(123)
 class SelfAttention_V1(nn.Module):
     def __init__(self, d_in, d_out):
         super().__init__()
