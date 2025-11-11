@@ -58,7 +58,17 @@ d_out = 2
 # context_vecs = ca(batch)
 # print("context_vecs.shape:", context_vecs.shape)
 
-mha = sa.MultiHeadAttentionWrapper(d_in=d_in, d_out=d_out, context_length=context_length, dropout=0.0, num_heads=2)
+# mha = sa.MultiHeadAttentionWrapper(d_in=d_in, d_out=d_out, context_length=context_length, dropout=0.0, num_heads=2)
+# context_vecs = mha(batch)
+# print(context_vecs)
+# print("context_vecs.shape:", context_vecs.shape)
+
+d_out = 4
+
+mha = sa.MultiHeadAttention(d_in=d_in, d_out=d_out, context_length=context_length, dropout=0.0, num_heads=2)
+
 context_vecs = mha(batch)
 print(context_vecs)
 print("context_vecs.shape:", context_vecs.shape)
+
+
