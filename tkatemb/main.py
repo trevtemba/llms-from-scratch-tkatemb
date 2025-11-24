@@ -160,22 +160,36 @@ if __name__ == "__main__":
         num_workers=0,
     )
 
-    print("Train loader:")
-    for x, y in train_loader:
-        print(x.shape, y.shape)
+    start_context = "Every effort moves you"
+
+    # print("Train loader:")
+    # for x, y in train_loader:
+    #     print(x.shape, y.shape)
         
-    print("\nValidation loader:")
-    for x, y in val_loader:
-        print(x.shape, y.shape)
+    # print("\nValidation loader:")
+    # for x, y in val_loader:
+    #     print(x.shape, y.shape)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-    with torch.no_grad():
-        train_loss = util.calc_loss_loader(train_loader, model, device)
-        val_loss = util.calc_loss_loader(val_loader, model, device)
 
-    print("Training loss:", train_loss)
-    print("Validation loss:", val_loss)
+    model.to(device)
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=0.0004, weight_decay=0.1
+    )
+    num_epochs = 10
+    train_losses, val_losses, tokens_seen = util.train_model_simple(
+        model, train_loader, val_loader, optimizer, device, num_epochs=num_epochs, eval_freq=5, eval_iter=5, start_context=start_context, tokenizer=tokenizer
+    )
+
+    model.to("cpu")
+    model.eval()
+    torch.manual_seed(123)
+    token_ids = util.generate(model=model, idx=util.text_to_token_ids("Every effort moves you", tokenizer),
+                              max_new_tokens=15, context_size=GPT_CONFIG_124M["context_length"], top_k= 25, temperature=1.4)
+    print("Output text:\n", util.token_ids_to_text(token_ids, tokenizer))
+
+
     
 
 
