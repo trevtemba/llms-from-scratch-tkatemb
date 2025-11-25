@@ -17,7 +17,7 @@ import tiktoken
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from gpt_download import download_and_load_gpt2
+from tkatemb.gpt_download import download_and_load_gpt2
 from previous_chapters import GPTModel, load_weights_into_gpt
 
 

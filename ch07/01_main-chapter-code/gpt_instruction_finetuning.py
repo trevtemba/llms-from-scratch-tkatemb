@@ -20,7 +20,7 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
 # Import from local files in this folder
-from gpt_download import download_and_load_gpt2
+from tkatemb.gpt_download import download_and_load_gpt2
 from previous_chapters import (
     calc_loss_loader,
     generate,
