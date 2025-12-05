@@ -1,5 +1,9 @@
 import pandas as pd
+from torch.utils.data import DataLoader
+import torch
 from pathlib import Path
+import tiktoken
+from dataset import SpamDataset
 
 # Configuration
 url = "https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip"
@@ -64,7 +68,6 @@ def create_balanced_dataset(df):
     
     return balanced_df
 
-
 # Create balanced dataset and display label distribution
 balanced_df = create_balanced_dataset(df)
 print(balanced_df["Label"].value_counts())
@@ -85,4 +88,62 @@ print(f"Test set: {len(test_df)} samples")
 train_df, validation_df, test_df = random_split(balanced_df, 0.7, 0.1)
 train_df.to_csv("train.csv", index=None)
 validation_df.to_csv("validation.csv", index=None)
-train_df.to_csv("test.csv", index=None)
+test_df.to_csv("test.csv", index=None)
+
+tokenizer = tiktoken.get_encoding("gpt2")
+
+train_dataset = SpamDataset(
+    csv_file="train.csv",
+    max_length=None,
+    tokenizer=tokenizer
+)
+
+val_dataset = SpamDataset(
+    csv_file="validation.csv",
+    max_length=train_dataset.max_length,
+    tokenizer=tokenizer
+)
+
+test_dataset = SpamDataset(
+    csv_file="test.csv",
+    max_length=train_dataset.max_length,
+    tokenizer=tokenizer
+)
+
+print(train_dataset.max_length)
+
+num_workers = 0
+batch_size = 8
+torch.manual_seed(123)
+
+train_loader = DataLoader(
+    dataset=train_dataset,
+    batch_size=batch_size,
+    shuffle=True,
+    num_workers=num_workers,
+    drop_last=True,
+)
+
+val_loader = DataLoader(
+    dataset=val_dataset,
+    batch_size=batch_size,
+    num_workers=num_workers,
+    drop_last=False,
+)
+
+test_loader = DataLoader(
+    dataset=test_dataset,
+    batch_size=batch_size,
+    num_workers=num_workers,
+    drop_last=False,
+)
+
+for input_batch, target_batch in train_loader:
+    pass
+
+print("Input batch dimensions:", input_batch.shape)
+print("Label batch dimensions:", target_batch.shape)
+
+print(f"{len(train_loader)} training batches")
+print(f"{len(val_loader)} validation batches")
+print(f"{len(test_loader)} test batches")
