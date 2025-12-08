@@ -8,6 +8,8 @@ from gpt_download import download_and_load_gpt2
 from load_weights import load_weights_util
 from GPT import GPTModel
 from train_eval import train_util as util
+from fine_tuning_classification import classification_util
+
 # Configuration
 url = "https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip"
 zip_path = "sms_spam_collection.zip"
@@ -147,3 +149,73 @@ token_ids = util.generate_text_simple(
     context_size=BASE_CONFIG["context_length"]
 )
 print(util.token_ids_to_text(token_ids, tokenizer))
+
+for param in model.parameters():
+    param.requires_grad = False
+
+torch.manual_seed(123)
+num_classes = 2
+model.out_head = torch.nn.Linear(
+    in_features=BASE_CONFIG["emb_dim"],
+    out_features=num_classes
+)
+
+#Makes final layer norm/last transformer block trainable
+for param in model.trf_blocks[-1].parameters():
+    param.requires_grad = True
+for param in model.final_norm.parameters():
+    param.requires_grad = True
+
+inputs = tokenizer.encode("Do you have time")
+inputs = torch.tensor(inputs).unsqueeze(0)
+print("Inputs", inputs)
+print("Inputs dimensions:", inputs.shape)
+
+with torch.no_grad():
+    outputs = model(inputs)
+
+print("Outputs:", outputs)
+print("Outputs dimensions", outputs.shape)
+
+print("Last output token:", outputs[:,-1,:])
+
+probas = torch.softmax(outputs[:,-1,:], dim = -1)
+label = torch.argmax(probas)
+print("Class label:", label.item())
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+
+# Determine teh classification accuracy across various datasets estimated form 10 batches for efficiency
+torch.manual_seed(123)
+train_accuracy = classification_util.calc_accuracy_loader(
+    train_loader, model, device, num_batches=10
+)
+
+val_accuracy = classification_util.calc_accuracy_loader(
+    val_loader, model, device, num_batches=10
+)
+test_accuracy = classification_util.calc_accuracy_loader(
+    test_loader, model, device, num_batches=10
+)
+
+print(f"Training accuracy: {train_accuracy*100:.2f}%")
+print(f"Validation accuracy: {val_accuracy*100:.2f}%")
+print(f"Test accuracy: {test_accuracy*100:.2f}%")
+
+# similar to calculating teh trainin accuracy we can no copmute the intial loss for each data set.
+with torch.no_grad():
+    train_loss = classification_util.calc_loss_loader(
+        train_loader, model, device, num_batches=5
+    )
+    
+    val_loss = classification_util.calc_loss_loader(
+        val_loader, model, device, num_batches=5
+    )
+    test_loss = classification_util.calc_loss_loader(
+        test_loader, model, device, num_batches=5
+    )
+
+print(f"Training loss: {train_loss:.3f}")
+print(f"Validation loss: {val_loss:.3f}")
+print(f"Test loss: {test_loss:.3f}")
