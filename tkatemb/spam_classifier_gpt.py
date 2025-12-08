@@ -1,4 +1,5 @@
 import pandas as pd
+import time
 from torch.utils.data import DataLoader
 import torch
 from pathlib import Path
@@ -219,3 +220,65 @@ with torch.no_grad():
 print(f"Training loss: {train_loss:.3f}")
 print(f"Validation loss: {val_loss:.3f}")
 print(f"Test loss: {test_loss:.3f}")
+
+start_time = time.time()
+torch.manual_seed(123)
+optimizer = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=0.1)
+num_epochs = 5
+
+train_losses, val_losses, train_accs, val_accs, examples_seen = \
+    classification_util.train_classifier_simple(
+        model, train_loader, val_loader, optimizer, device, num_epochs=num_epochs, eval_freq=50, eval_iter=5
+    )
+
+end_time = time.time()
+execution_time_minutes = (end_time - start_time)/60
+print(f"Training completed in {execution_time_minutes:.2f} minutes.")
+
+train_accuracy = classification_util.calc_accuracy_loader(train_loader, model, device)
+val_accuracy = classification_util.calc_accuracy_loader(val_loader, model, device)
+test_accuracy = classification_util.calc_accuracy_loader(test_loader, model, device)
+
+print(f"Training accuracy: {train_accuracy*100:.2f}%")
+print(f"Val accuracy: {val_accuracy*100:.2f}%")
+print(f"Test accuracy: {test_accuracy*100:.2f}%")
+
+# Using fine tuned classifier.``
+text_1 = (
+    "You are a winner you have been specially"
+    " selected to receive $1000 cash or a $2000 award."
+)
+
+print(
+    classification_util.classify_review(
+        text_1,
+        model,
+        tokenizer,
+        device,
+        max_length=train_dataset.max_length
+    )
+)
+
+text_2 = (
+    "Hey, just wanted to check if we're still on"
+    " for dinner tonight? Let me know!"
+)
+
+print(
+    classification_util.classify_review(
+        text_2,
+        model,
+        tokenizer,
+        device,
+        max_length=train_dataset.max_length
+    )
+)
+
+torch.save(model.state_dict(), "review_classifier.pth")
+
+# If you want to load it do:
+# model_state_dict = torch.load(
+#     "review_classifier.pth",
+#     map_location=device
+# )
+# model.load_state_dict(model_state_dict)
