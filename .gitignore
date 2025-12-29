@@ -331,3 +331,6 @@ cython_debug/
 
 # model weights
 gpt2/
+
+gpt2-medium355M-sft.pth
+instruction-data-with-response.json
